@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, DateTime, Boolean
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import relationship
 from database import Base, Session
 import bcrypt
 
@@ -10,6 +11,7 @@ class User(Base):
     username = Column("username", String)
     email = Column("email", String, unique=True)
     password = Column("password", String)
+    tasks = relationship("tasks", back_populates="user")
 
     def __init__(self, username, email, password):
         self.username = username
@@ -17,7 +19,10 @@ class User(Base):
         self.password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     def __repr__(self):
-        return f'username: {self.username}\nemail: {self.email}'
+        return {"username": self.username,
+                "email": self.email,
+                "id": self.id
+                }
 
     def add(self):
         session = Session()
