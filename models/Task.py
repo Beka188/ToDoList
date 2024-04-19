@@ -6,6 +6,7 @@ from database import Base, Session
 
 
 class Task(Base):
+    __tablename__ = "tasks"
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     title = Column("title", String)
     description = Column("description", String)

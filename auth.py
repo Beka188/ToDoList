@@ -4,7 +4,7 @@ from fastapi import HTTPException, Security, Depends, status
 from fastapi.security import HTTPBasicCredentials, HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer, \
     OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
-
+from models.User import User, login
 import jwt
 
 # from User import *
@@ -47,15 +47,15 @@ class AuthHandler:
 auth_handler = AuthHandler()
 
 
-# def login_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-#     user = login(form_data.username, form_data.password)
-#     if not user:
-#         raise HTTPException(
-#             status_code=401,
-#             detail="Incorrect username or password"
-#         )
-#     jwt_token = auth_handler.encode_token(form_data.username)
-#     return {"access_token": jwt_token}
+def login_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    user = login(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password"
+        )
+    jwt_token = auth_handler.encode_token(form_data.username)
+    return {"access_token": jwt_token}
 
 
 async def unauthorized():
