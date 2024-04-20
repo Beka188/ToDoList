@@ -43,7 +43,9 @@ class Task(Base):
         self.category = category
 
     def __repr__(self):
-        return f'title: {self.title}\nDescription: {self.description}\nCompleted: {self.status}\n{self.due_date}\nuser_id: {self.user_id},  category: {self.category}'
+        return {"id": self.id, "title": self.title, "description": self.description, "category": self.category,
+                "due_date": self.due_date, "status": self.status, "user_id": self.user_id}
+        # return f'title: {self.title}\nDescription: {self.description}\nCompleted: {self.status}\n{self.due_date}\nuser_id: {self.user_id},  category: {self.category}'
 
     def add(self):
         session = Session()
@@ -57,7 +59,7 @@ class Task(Base):
             session.close()
 
 
-def find_task(task_id: int):
+def find_task(task_id: int) -> Task:
     session = Session()
     task = session.query(Task).filter(Task.id == task_id).first()
     return task
@@ -77,4 +79,3 @@ def update(task_id, data: _json):
         raise e
     finally:
         session.close()
-

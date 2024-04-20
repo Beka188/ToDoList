@@ -46,8 +46,7 @@ class User(Base):
     def all_tasks(self):
         session = Session()
         tasks = session.query(Task).filter(Task.user_id == self.id).all()
-        return [{"id": task.id, "title": task.title, "description": task.description, "category": task.category, "status": task.status,
-                 "due_date": task.due_date, "user_id": task.user_id} for
+        return [task.__repr__() for
                 task in tasks]
 
 

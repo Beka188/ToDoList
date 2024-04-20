@@ -69,7 +69,7 @@ async def update_task(task_id: int, update_data: UpdateTask, token: str = Depend
     if user and task and user.id == task.user_id:
         data = update_data.dict(exclude_unset=True)
         update(task_id, data)
-        return find_task(task_id)
+        return find_task(task_id).__repr__()
     else:
         raise HTTPException(status_code=404, detail="Not found!")
 
