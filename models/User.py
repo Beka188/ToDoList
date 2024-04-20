@@ -4,6 +4,8 @@ from sqlalchemy.orm import relationship
 from database import Base, Session
 import bcrypt
 
+from models.Task import Task
+
 
 class User(Base):
     __tablename__ = "users"
@@ -40,6 +42,13 @@ class User(Base):
 
     def verify_password(self, password):
         return bcrypt.checkpw(password.encode(), self.password.encode('utf-8'))
+
+    def all_tasks(self):
+        session = Session()
+        tasks = session.query(Task).filter(Task.user_id == self.id).all()
+        return [{"id": task.id, "title": task.title, "description": task.description, "category": task.category, "status": task.status,
+                 "due_date": task.due_date, "user_id": task.user_id} for
+                task in tasks]
 
 
 def login(email, password):

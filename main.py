@@ -40,13 +40,21 @@ def access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return login_jwt(form_data)
 
 
-@app.get("/users/me")
+@app.get("/users/me/info")
 def get_info_about_user(token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
-        return user.__repr__()
+        return {"username": user.username,
+                "email": user.email
+                }
 
+@app.get("/users/me/tasks")
+def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        return {"tasks": user.all_tasks()}
 
 @app.post("/tasks/new")
 def create_task(title: str, description: str, status: TaskStatus, due_date: Union[int, date], category: CategoryType, token: Annotated[str, Depends(oauth2_scheme)]):
