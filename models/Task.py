@@ -1,3 +1,6 @@
+import _json
+
+from fastapi import HTTPException
 from sqlalchemy import Column, String, Integer, ForeignKey, \
     Enum as EnumType
 from sqlalchemy.orm import relationship
@@ -52,3 +55,26 @@ class Task(Base):
             raise e
         finally:
             session.close()
+
+
+def find_task(task_id: int):
+    session = Session()
+    task = session.query(Task).filter(Task.id == task_id).first()
+    return task
+
+
+def update(task_id, data: _json):
+    session = Session()
+    task = session.query(Task).filter(Task.id == task_id).first()
+    try:
+        print("Dannye: ")
+        for key, value in data.items():
+            if hasattr(task, key):
+                setattr(task, key, value)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
