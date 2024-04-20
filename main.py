@@ -1,10 +1,14 @@
+import uvicorn, os
+
 from sqlalchemy import DateTime
 from fastapi import FastAPI, Request, Depends, Form, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from database import init_db
-from typing import Annotated
+from typing import Annotated, Union
+from datetime import date
 
 from models.User import User, find_user
+from models.Task import Task, CategoryType, TaskStatus
 from auth import login_jwt, AuthHandler
 
 app = FastAPI()
@@ -43,11 +47,21 @@ def get_info_about_user(token: Annotated[str, Depends(oauth2_scheme)]):
     if user:
         return user.__repr__()
 
-@app.get("/tasks/new")
-def create_task(title: str, description: str, status: str, due_date: DateTime, token: Annotated[str, Depends(oauth2_scheme)]):
-    return "Hi"
+
+@app.post("/tasks/new")
+def create_task(title: str, description: str, status: TaskStatus, due_date: Union[int, date], category: CategoryType, token: Annotated[str, Depends(oauth2_scheme)]):
+    if isinstance(due_date, int):
+        due_date = date.fromtimestamp(due_date)
+    else:
+        return {"The date format is incorrect!"}
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        new_task = Task(title, description, due_date, status, user.id, category)
+        new_task.add()
+        return {"Successfully added!"}
 
 
 if __name__ == "__main__":
     init_db()
-    # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
+    uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")

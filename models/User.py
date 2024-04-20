@@ -11,7 +11,7 @@ class User(Base):
     username = Column("username", String)
     email = Column("email", String, unique=True)
     password = Column("password", String)
-    tasks = relationship("tasks", back_populates="user")
+    tasks = relationship("Task", back_populates="user")
 
     def __init__(self, username, email, password):
         self.username = username
@@ -41,6 +41,7 @@ class User(Base):
     def verify_password(self, password):
         return bcrypt.checkpw(password.encode(), self.password.encode('utf-8'))
 
+
 def login(email, password):
     user = find_user(email)
     if user is not None:
@@ -53,8 +54,3 @@ def find_user(email):
     session = Session()
     user = session.query(User).filter(User.email == email).first()
     return user
-
-
-
-
-
