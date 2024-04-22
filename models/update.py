@@ -1,4 +1,5 @@
-from typing import Optional
+from datetime import date
+from typing import Optional, Union
 
 from pydantic import BaseModel
 from models.Task import CategoryType, TaskStatus
@@ -8,6 +9,14 @@ class UpdateUserInfo(BaseModel):
     phone: Optional[str] = None
     name: Optional[str] = None
     city: Optional[str] = None
+
+
+class createTask(BaseModel):
+    title: str = "Title"
+    description: Optional[str] = "Description of the task"
+    status: Optional[TaskStatus] = "Status of the task: done, in_progress, to_do(default), missing"
+    due_date: Union[int, date] = "deadline of the task: Provide in timestamp"
+    category: Optional[CategoryType] = "The category of the task: work, personal, education, social, other(default)"
 
 
 class UpdateTask(BaseModel):

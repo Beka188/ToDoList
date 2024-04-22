@@ -1,4 +1,5 @@
 import _json
+from datetime import date
 
 from fastapi import HTTPException
 from sqlalchemy import Column, String, Integer, ForeignKey, \
@@ -27,12 +28,12 @@ class Task(Base):
     __tablename__ = "tasks"
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     title = Column("title", String)
-    description = Column("description", String)
+    description = Column("description", String, default="")
     due_date = Column("due_date", Integer)
     status = Column("status", EnumType(TaskStatus), default=TaskStatus.TO_DO)
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="tasks")
-    category = Column("category", EnumType(CategoryType))
+    category = Column("category", EnumType(CategoryType), default=CategoryType.OTHER)
 
     def __init__(self, title, description, due_date, status, user_id, category):
         self.title = title
@@ -45,7 +46,6 @@ class Task(Base):
     def __repr__(self):
         return {"id": self.id, "title": self.title, "description": self.description, "category": self.category,
                 "due_date": self.due_date, "status": self.status, "user_id": self.user_id}
-        # return f'title: {self.title}\nDescription: {self.description}\nCompleted: {self.status}\n{self.due_date}\nuser_id: {self.user_id},  category: {self.category}'
 
     def add(self):
         session = Session()
@@ -72,6 +72,9 @@ def update(task_id, data: _json):
         print("Dannye: ")
         for key, value in data.items():
             if hasattr(task, key):
+                if key == "due_date":
+                    if isinstance(value, int):
+                        value = date.fromtimestamp(value)
                 setattr(task, key, value)
         session.commit()
     except Exception as e:
