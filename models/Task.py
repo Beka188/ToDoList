@@ -1,5 +1,5 @@
 import _json
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import HTTPException
 from sqlalchemy import Column, String, Integer, ForeignKey, \
@@ -16,7 +16,7 @@ class TaskStatus(str, Enum):
     MISSING = "missing"
 
 
-class CategoryType(str, Enum):
+class TaskCategory(str, Enum):
     WORK = "work"
     PERSONAL = "personal"
     EDUCATION = "education"
@@ -32,7 +32,7 @@ class Task(Base):
     due_date = Column("due_date", Integer)
     status = Column("status", EnumType(TaskStatus), default=TaskStatus.TO_DO)
     user_id = Column(Integer, ForeignKey("users.id"))
-    category = Column("category", EnumType(CategoryType), default=CategoryType.OTHER)
+    category = Column("category", EnumType(TaskCategory), default=TaskCategory.OTHER)
 
     user = relationship("User", back_populates="tasks")
 
@@ -46,7 +46,7 @@ class Task(Base):
 
     def __repr__(self):
         return {"id": self.id, "title": self.title, "description": self.description, "category": self.category,
-                "due_date": self.due_date, "status": self.status, "user_id": self.user_id}
+                "due_date": datetime.fromtimestamp(self.due_date), "status": self.status, "user_id": self.user_id}
 
     def add(self):
         session = Session()
@@ -89,3 +89,14 @@ def delete_user_task(task_id):
     session = Session()
     session.query(Task).filter(Task.id == task_id).delete()
     session.commit()
+
+
+def sorted_tasks(query: str):
+    session = Session()
+    tasks = session.query(Task).order_by(getattr(Task, query)).all()
+    print("IIII")
+    for task in tasks:
+        print(task.title)
+        print(task.due_date)
+    session.commit()
+    return tasks

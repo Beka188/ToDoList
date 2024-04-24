@@ -8,7 +8,7 @@ from datetime import date
 
 from models.update import UpdateTask, createTask
 from models.User import User, find_user
-from models.Task import Task, find_task, update, delete_user_task, TaskStatus, CategoryType
+from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory, sorted_tasks
 from auth import login_jwt, AuthHandler
 
 app = FastAPI()
@@ -52,16 +52,27 @@ def get_info_about_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 @app.get("/users/me/tasks")
-def user_tasks(token: Annotated[str, Depends(oauth2_scheme)], status: str = Query(None)):
+def user_tasks(token: Annotated[str, Depends(oauth2_scheme)], status: str = Query(None), category: str = Query(None), sort_by: str = Query(None)):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
         tasks = user.all_tasks()
+        if sort_by:
+            reverse = False
+            if sort_by.startswith("-"):
+                reverse = True
+                sort_by = sort_by[1:]
+            tasks.sort(key=lambda x: x.get(sort_by), reverse=reverse)
         if status is not None:
             if status in TaskStatus:
                 tasks = [task for task in tasks if task["status"] == status]
             else:
                 raise HTTPException(status_code=400, detail="Provided status is not valid!")
+        if category is not None:
+            if category in TaskCategory:
+                tasks = [task for task in tasks if task["category"] == category]
+            else:
+                raise HTTPException(status_code=400, detail="Provided category is not valid!")
         return {"tasks": tasks}
     elif not user:
         raise HTTPException(status_code=404, detail="User not found!")
@@ -99,7 +110,7 @@ async def delete_task(task_id: int, token: str = Depends(oauth2_scheme)):
 
 
 @app.post("/users/me/new_task")
-def create_task(title: str, description: str, status: TaskStatus, due_date: Union[int, date], category: CategoryType,
+def create_task(title: str, description: str, status: TaskStatus, due_date: Union[int, date], category: TaskCategory,
                 token: Annotated[str, Depends(oauth2_scheme)]):
     if isinstance(due_date, int):
         due_date = date.fromtimestamp(due_date)
@@ -116,8 +127,7 @@ def create_task(title: str, description: str, status: TaskStatus, due_date: Unio
 
 
 if __name__ == "__main__":
-    for i in range(1, 10):
-        new_task = Task(f"Task number {i}", "", 1713980581, TaskStatus.DONE, 1, CategoryType.SOCIAL)
-        new_task.add()
+    new_task = Task(f"AAA", "", 1714940581, TaskStatus.DONE, 1, TaskCategory.PERSONAL)
+    new_task.add()
     # init_db()
     # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")

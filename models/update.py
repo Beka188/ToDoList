@@ -2,7 +2,7 @@ from datetime import date
 from typing import Optional, Union
 
 from pydantic import BaseModel
-from models.Task import CategoryType, TaskStatus
+from models.Task import TaskCategory, TaskStatus
 
 
 class UpdateUserInfo(BaseModel):
@@ -16,12 +16,12 @@ class createTask(BaseModel):
     description: Optional[str] = "Description of the task"
     status: Optional[TaskStatus] = "Status of the task: done, in_progress, to_do(default), missing"
     due_date: Union[int, date] = "deadline of the task: Provide in timestamp"
-    category: Optional[CategoryType] = "The category of the task: work, personal, education, social, other(default)"
+    category: Optional[TaskCategory] = "The category of the task: work, personal, education, social, other(default)"
 
 
 class UpdateTask(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    category: Optional[CategoryType] = None
+    category: Optional[TaskCategory] = None
     due_date: Optional[int] = None
     status: Optional[TaskStatus] = None
