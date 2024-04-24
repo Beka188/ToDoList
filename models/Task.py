@@ -32,8 +32,9 @@ class Task(Base):
     due_date = Column("due_date", Integer)
     status = Column("status", EnumType(TaskStatus), default=TaskStatus.TO_DO)
     user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User", back_populates="tasks")
     category = Column("category", EnumType(CategoryType), default=CategoryType.OTHER)
+
+    user = relationship("User", back_populates="tasks")
 
     def __init__(self, title, description, due_date, status, user_id, category):
         self.title = title
@@ -82,3 +83,9 @@ def update(task_id, data: _json):
         raise e
     finally:
         session.close()
+
+
+def delete_user_task(task_id):
+    session = Session()
+    session.query(Task).filter(Task.id == task_id).delete()
+    session.commit()
