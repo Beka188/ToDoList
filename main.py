@@ -6,9 +6,9 @@ from database import init_db
 from typing import Annotated, Union
 from datetime import date
 
-from models.update import UpdateTask, createTask
+from models.update import UpdateTask
 from models.User import User, find_user
-from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory, sorted_tasks
+from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
 from auth import login_jwt, AuthHandler
 
 app = FastAPI()
@@ -127,7 +127,5 @@ def create_task(title: str, description: str, status: TaskStatus, due_date: Unio
 
 
 if __name__ == "__main__":
-    new_task = Task(f"AAA", "", 1714940581, TaskStatus.DONE, 1, TaskCategory.PERSONAL)
-    new_task.add()
-    # init_db()
-    # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
+    init_db()
+    uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")

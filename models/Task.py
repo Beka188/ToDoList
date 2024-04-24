@@ -90,13 +90,3 @@ def delete_user_task(task_id):
     session.query(Task).filter(Task.id == task_id).delete()
     session.commit()
 
-
-def sorted_tasks(query: str):
-    session = Session()
-    tasks = session.query(Task).order_by(getattr(Task, query)).all()
-    print("IIII")
-    for task in tasks:
-        print(task.title)
-        print(task.due_date)
-    session.commit()
-    return tasks
