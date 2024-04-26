@@ -189,7 +189,6 @@ def accept_invitation(invitation_token: str, token: Annotated[str, Depends(oauth
     if user:
         group_invitation = is_invitation(invitation_token)
         if group_invitation:
-            group_invitation.status = "accepted"
             add_to_group(group_invitation.group_id, user.id)
             return {"message": "Invitation accepted"}
         else:
@@ -198,15 +197,19 @@ def accept_invitation(invitation_token: str, token: Annotated[str, Depends(oauth
         raise HTTPException(status_code=404, detail="User not found!")
 
 
-#
-# @app.post("/invitations/decline/{token}")
-# def decline_invitation(token: str):
-#     invitation = next((inv for inv in invitations_db if inv.token == token), None)
-#     if invitation:
-#         invitation.status = "declined"
-#         return {"message": "Invitation declined"}
-#     else:
-#         raise HTTPException(status_code=404, detail="Invitation not found")
+@app.post("/invitations/decline/{token}")
+def decline_invitation(invitation_token: str, token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        group_invitation = is_invitation(invitation_token)
+        if group_invitation:
+            return {"message": "Invitation declined"}
+        else:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+    else:
+        raise HTTPException(status_code=404, detail="User not found!")
+
 
 # check if that group still exist?
 if __name__ == "__main__":
