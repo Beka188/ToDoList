@@ -2,9 +2,8 @@ from sqlalchemy import Column, String, Integer, DateTime, Boolean, ARRAY, Table,
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
 from database import Base, Session
-from models.members import add_member
+from models.members import add_member, members
 import bcrypt
-
 
 
 class Group(Base):
@@ -22,11 +21,19 @@ class Group(Base):
     def __repr__(self):
         return {"name": self.name,
                 "description": self.description,
-                "creator_id": self.creator_id
+                "creator_id": self.creator_id,
+                "members": all_members(self.id)
                 }
 
 
-def create_new_group(creator_id: int, name: str, description: str = ""):
+def all_groups(user_id):
+    session = Session()
+    groups = session.query(Group).filter(Group.creator_id == user_id).all()
+    return [group.__repr__() for
+            group in groups]
+
+
+def create_new_group(creator_id: int, name: str, description: str):
     try:
         new_group = Group(creator_id, name, description)
     except ValueError:
@@ -43,3 +50,7 @@ def create_new_group(creator_id: int, name: str, description: str = ""):
 
 def add_to_group(group_id: int, member_id: int):
     add_member(group_id, member_id)
+
+
+def all_members(group_id):
+    return members(group_id)

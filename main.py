@@ -9,7 +9,7 @@ from datetime import date
 from models.update import UpdateTask
 from models.User import User, find_user
 from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
-from models.Group import add_to_group, create_new_group
+from models.Group import add_to_group, create_new_group, all_members
 from auth import login_jwt, AuthHandler
 
 app = FastAPI()
@@ -53,7 +53,8 @@ def get_info_about_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 @app.get("/users/me/tasks")
-def user_tasks(token: Annotated[str, Depends(oauth2_scheme)], status: str = Query(None), category: str = Query(None), sort_by: str = Query(None)):
+def user_tasks(token: Annotated[str, Depends(oauth2_scheme)], status: str = Query(None), category: str = Query(None),
+               sort_by: str = Query(None)):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
@@ -123,6 +124,36 @@ def create_task(title: str, description: str, status: TaskStatus, due_date: Unio
         raise HTTPException(status_code=200, detail="Successfully added!")
     else:
         raise HTTPException(status_code=404, detail="User not found!")
+
+
+@app.post("/users/me/new_group")
+def create_group(name: str, description: str, token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        created = create_new_group(user.id, name, description)
+        if created == -1:
+            raise HTTPException(status_code=400, detail="Incorrect format!")
+        elif created == 0:
+            raise HTTPException(status_code=409, detail="Group with such name already exist!")
+        else:
+            raise HTTPException(status_code=200, detail="Successfully added!")
+    else:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+
+@app.get("/users/me/groups")
+def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        groups = user.all_groups()
+        return {"groups": groups}
+    elif not user:
+        raise HTTPException(status_code=404, detail="User not found!")
+    else:
+        raise HTTPException(status_code=500)
+
 
 
 if __name__ == "__main__":

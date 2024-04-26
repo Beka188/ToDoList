@@ -1,10 +1,5 @@
 from sqlalchemy import Column, String, Integer, DateTime, Boolean, ARRAY
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship
 from database import Base, Session
-import bcrypt
-
-from models.Task import Task
 
 
 class Member(Base):
@@ -29,3 +24,10 @@ def delete_member(group_id: int, member_id: int):
     session = Session()
     session.query(Member).filter(group_id == Member.group_id, member_id == Member.member_id).delete()
     session.commit()
+
+
+def members(group_id: int):
+    session = Session()
+    all_members = session.query(Member.id).filter(Member.group_id == group_id).all()
+    session.commit()
+    return [member.id for member in all_members]

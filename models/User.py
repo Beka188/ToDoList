@@ -5,6 +5,7 @@ from database import Base, Session
 import bcrypt
 
 from models.Task import Task
+from models.Group import all_groups
 
 
 class User(Base):
@@ -48,6 +49,10 @@ class User(Base):
         tasks = session.query(Task).filter(Task.user_id == self.id).all()
         return [task.__repr__() for
                 task in tasks]
+
+    def all_groups(self):
+        return all_groups(self.id)
+
 
 
 def login(email, password):
