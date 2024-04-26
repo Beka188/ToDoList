@@ -18,7 +18,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @app.get("/")
 def home():
-    return "Hello World!"
+    return "Hello World!!"
 
 
 @app.post("/auth/login")
@@ -112,9 +112,7 @@ async def delete_task(task_id: int, token: str = Depends(oauth2_scheme)):
 @app.post("/users/me/new_task")
 def create_task(title: str, description: str, status: TaskStatus, due_date: Union[int, date], category: TaskCategory,
                 token: Annotated[str, Depends(oauth2_scheme)]):
-    if isinstance(due_date, int):
-        due_date = date.fromtimestamp(due_date)
-    else:
+    if not isinstance(due_date, int):
         raise HTTPException(status_code=422, detail="The date format is incorrect!")
     email = auth_handler.decode_token(token)
     user = find_user(email)
