@@ -9,6 +9,7 @@ from datetime import date
 from models.update import UpdateTask
 from models.User import User, find_user
 from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
+from models.Group import add_to_group, create_new_group
 from auth import login_jwt, AuthHandler
 
 app = FastAPI()
@@ -126,4 +127,7 @@ def create_task(title: str, description: str, status: TaskStatus, due_date: Unio
 
 if __name__ == "__main__":
     init_db()
-    uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
+    create_new_group(1, "Fourth group", "xDDD")
+    add_to_group(4, 2)
+
+    # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
