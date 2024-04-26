@@ -10,6 +10,7 @@ from models.update import UpdateTask
 from models.User import User, find_user
 from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
 from models.Group import add_to_group, create_new_group, all_members
+from models.invitations import generate_unique_token, Invitation, is_invitation
 from auth import login_jwt, AuthHandler
 
 app = FastAPI()
@@ -126,7 +127,7 @@ def create_task(title: str, description: str, status: TaskStatus, due_date: Unio
         raise HTTPException(status_code=404, detail="User not found!")
 
 
-@app.post("/users/me/new_group")
+@app.post("/users/me/group/new_group")
 def create_group(name: str, description: str, token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
@@ -168,10 +169,50 @@ def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
         raise HTTPException(status_code=500)
 
 
+@app.post("/users/me/group/invitations/create")
+def create_invitation(group_id: int, token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        invitation_token = generate_unique_token()
+        group_invitation = Invitation(sender_id=user.id, group_id=group_id, token=invitation_token)
+        group_invitation.add()
+        return {"token": invitation_token}
+    else:
+        raise HTTPException(status_code=404, detail="User not found!")
 
+
+@app.post("/invitations/accept/{token}")
+def accept_invitation(invitation_token: str, token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        group_invitation = is_invitation(invitation_token)
+        if group_invitation:
+            group_invitation.status = "accepted"
+            add_to_group(group_invitation.group_id, user.id)
+            return {"message": "Invitation accepted"}
+        else:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+    else:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+
+#
+# @app.post("/invitations/decline/{token}")
+# def decline_invitation(token: str):
+#     invitation = next((inv for inv in invitations_db if inv.token == token), None)
+#     if invitation:
+#         invitation.status = "declined"
+#         return {"message": "Invitation declined"}
+#     else:
+#         raise HTTPException(status_code=404, detail="Invitation not found")
+
+# check if that group still exist?
 if __name__ == "__main__":
+    print(accept_invitation("504d11b6-fb13-42ca-8478-7f96a1c6a91a"))
     # init_db()
-    # create_new_group(1, "Fourth group", "xDDD")
-    # add_to_group(3, 2)
-    print(all_members(4))
+    # token = generate_unique_token()
+    # invitation = Invitation(sender_id=1, group_id=1, token=token)
+    # invitation.add()
     # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
