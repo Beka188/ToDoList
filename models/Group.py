@@ -1,9 +1,6 @@
 from sqlalchemy import Column, String, Integer, DateTime, Boolean, ARRAY, Table, ForeignKey
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship
 from database import Base, Session
 from models.members import add_member, members
-import bcrypt
 
 
 class Group(Base):
@@ -31,6 +28,19 @@ def all_groups(user_id):
     groups = session.query(Group).filter(Group.creator_id == user_id).all()
     return [group.__repr__() for
             group in groups]
+
+
+def member_of_groups(user_id):
+    session = Session()
+    groups = session.query(Group).filter(Group.creator_id != user_id).all()
+    answer = []
+    for group in groups:
+        print()
+        members_ = all_members(group.id)
+        for member_id in members_:
+            if member_id == user_id:
+                answer.append(group)
+    return answer
 
 
 def create_new_group(creator_id: int, name: str, description: str):

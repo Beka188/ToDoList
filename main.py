@@ -142,12 +142,25 @@ def create_group(name: str, description: str, token: Annotated[str, Depends(oaut
         raise HTTPException(status_code=404, detail="User not found!")
 
 
-@app.get("/users/me/groups")
+@app.get("/users/me/ownGroups")
 def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
-        groups = user.all_groups()
+        groups = user.user_own_groups()
+        return {"groups": groups}
+    elif not user:
+        raise HTTPException(status_code=404, detail="User not found!")
+    else:
+        raise HTTPException(status_code=500)
+
+
+@app.get("/users/me/memberGroups")
+def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    if user:
+        groups = user.user_member_groups()
         return {"groups": groups}
     elif not user:
         raise HTTPException(status_code=404, detail="User not found!")
@@ -157,8 +170,8 @@ def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 if __name__ == "__main__":
-    init_db()
-    create_new_group(1, "Fourth group", "xDDD")
-    add_to_group(4, 2)
-
+    # init_db()
+    # create_new_group(1, "Fourth group", "xDDD")
+    # add_to_group(3, 2)
+    print(all_members(4))
     # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")

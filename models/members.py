@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, ARRAY
+from sqlalchemy import Column, Integer
 from database import Base, Session
 
 
@@ -28,6 +28,6 @@ def delete_member(group_id: int, member_id: int):
 
 def members(group_id: int):
     session = Session()
-    all_members = session.query(Member.id).filter(Member.group_id == group_id).all()
+    all_members = session.query(Member).filter(Member.group_id == group_id).all()
     session.commit()
-    return [member.id for member in all_members]
+    return [member.member_id for member in all_members]
