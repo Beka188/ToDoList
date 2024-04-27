@@ -9,8 +9,10 @@ from datetime import date
 from models.update import UpdateTask
 from models.User import User, find_user
 from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
-from models.Group import add_to_group, create_new_group, all_members
+from models.Group import add_to_group, create_new_group, all_members, drop_groups_table, all_groups
 from models.invitations import generate_unique_token, Invitation, is_invitation
+from models.members import drop_members_table
+from models.GroupTask import GroupTask
 from auth import login_jwt, AuthHandler
 
 app = FastAPI()
@@ -144,7 +146,7 @@ def create_group(name: str, description: str, token: Annotated[str, Depends(oaut
 
 
 @app.get("/users/me/ownGroups")
-def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
+def user_admin_groups(token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
@@ -157,7 +159,7 @@ def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 @app.get("/users/me/memberGroups")
-def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
+def user_member_groups(token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
@@ -173,16 +175,23 @@ def user_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
 def create_invitation(group_id: int, token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
-    if user:
+    found = False
+    for group in all_groups(user.id):
+        if group["id"] == group_id:
+            found = True
+            break
+    if found:
         invitation_token = generate_unique_token()
         group_invitation = Invitation(sender_id=user.id, group_id=group_id, token=invitation_token)
         group_invitation.add()
         return {"token": invitation_token}
+    elif user:
+        raise HTTPException(status_code=403, detail="This is not your group!")
     else:
         raise HTTPException(status_code=404, detail="User not found!")
 
 
-@app.post("/invitations/accept/{token}")
+@app.post("/users/me/group/invitations/accept/{token}")
 def accept_invitation(invitation_token: str, token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
@@ -197,7 +206,7 @@ def accept_invitation(invitation_token: str, token: Annotated[str, Depends(oauth
         raise HTTPException(status_code=404, detail="User not found!")
 
 
-@app.post("/invitations/decline/{token}")
+@app.post("/users/me/group/invitations/decline/{token}")
 def decline_invitation(invitation_token: str, token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
@@ -211,11 +220,28 @@ def decline_invitation(invitation_token: str, token: Annotated[str, Depends(oaut
         raise HTTPException(status_code=404, detail="User not found!")
 
 
+@app.post("/users/me/group/{group_id}/new_task")
+def new_group_task(group_id: int, title: str, description: str, status: TaskStatus, due_date: Union[int, date],
+                   token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    found = False
+    for group in all_groups(user.id):
+        if group["id"] == group_id:
+            found = True
+            break
+    if found:
+        new_task = Task(title, description, due_date, status, user.id, TaskCategory.GROUP)
+        task_id = new_task.add()
+        group_task = GroupTask(group_id, task_id)
+        group_task.add()
+    else:
+        raise HTTPException(status_code=403,
+                            detail="You are not the owner of the group! Only the owner can create tasks!")
+
+
 # check if that group still exist?
 if __name__ == "__main__":
-    print(accept_invitation("504d11b6-fb13-42ca-8478-7f96a1c6a91a"))
     # init_db()
-    # token = generate_unique_token()
-    # invitation = Invitation(sender_id=1, group_id=1, token=token)
-    # invitation.add()
+    print(all_groups(2))
     # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")

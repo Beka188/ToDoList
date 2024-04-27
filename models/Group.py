@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, DateTime, Boolean, ARRAY, Table, ForeignKey
-from database import Base, Session
+from database import Base, Session, engine
 from models.members import add_member, members
 
 
@@ -16,11 +16,13 @@ class Group(Base):
         self.description = description
 
     def __repr__(self):
-        return {"name": self.name,
-                "description": self.description,
-                "creator_id": self.creator_id,
-                "members": all_members(self.id)
-                }
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "creator_id": self.creator_id,
+            "members": all_members(self.id)
+        }
 
 
 def all_groups(user_id):
@@ -64,3 +66,7 @@ def add_to_group(group_id: int, member_id: int):
 
 def all_members(group_id):
     return members(group_id)
+
+
+def drop_groups_table():
+    Base.metadata.tables['groups'].drop(bind=engine, checkfirst=True)

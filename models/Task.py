@@ -21,6 +21,7 @@ class TaskCategory(str, Enum):
     PERSONAL = "personal"
     EDUCATION = "education"
     SOCIAL = "social"
+    GROUP = "group"
     OTHER = "other"
 
 
@@ -33,6 +34,7 @@ class Task(Base):
     status = Column("status", EnumType(TaskStatus), default=TaskStatus.TO_DO)
     user_id = Column(Integer, ForeignKey("users.id"))
     category = Column("category", EnumType(TaskCategory), default=TaskCategory.OTHER)
+
 
     user = relationship("User", back_populates="tasks")
 
@@ -53,6 +55,7 @@ class Task(Base):
         try:
             session.add(self)
             session.commit()
+            return self.id
         except Exception as e:
             session.rollback()
             raise e

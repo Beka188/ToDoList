@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer
-from database import Base, Session
+from database import Base, Session, engine
 
 
 class Member(Base):
@@ -31,3 +31,7 @@ def members(group_id: int):
     all_members = session.query(Member).filter(Member.group_id == group_id).all()
     session.commit()
     return [member.member_id for member in all_members]
+
+
+def drop_members_table():
+    Base.metadata.tables['members'].drop(bind=engine, checkfirst=True)
