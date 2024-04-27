@@ -2,17 +2,17 @@ import uvicorn, os
 
 from fastapi import FastAPI, Depends, Form, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from database import init_db
+from app.database import init_db
 from typing import Annotated, Union
 from datetime import date
 
-from models.update import UpdateTask
-from models.User import User, find_user
-from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
-from models.Group import add_to_group, create_new_group, find_group, all_groups, delete_group
-from models.invitations import generate_unique_token, Invitation, is_invitation
-from models.GroupTask import GroupTask
-from auth import login_jwt, AuthHandler
+from app.models.update import UpdateTask
+from app.models.User import User, find_user
+from app.models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
+from app.models.Group import add_to_group, create_new_group, find_group, all_groups, delete_group
+from app.models.invitations import generate_unique_token, Invitation, is_invitation
+from app.models.GroupTask import GroupTask
+from app.auth import login_jwt, AuthHandler
 
 app = FastAPI()
 auth_handler = AuthHandler()
