@@ -1,12 +1,11 @@
 import _json
 from datetime import date, datetime
 
-from fastapi import HTTPException
 from sqlalchemy import Column, String, Integer, ForeignKey, \
     Enum as EnumType
 from sqlalchemy.orm import relationship
 from enum import Enum
-from database import Base, Session
+from app.database import Base, Session
 
 
 class TaskStatus(str, Enum):
@@ -55,7 +54,7 @@ class Task(Base):
         try:
             session.add(self)
             session.commit()
-            return self.id
+            return self.__repr__()
         except Exception as e:
             session.rollback()
             raise e
@@ -66,7 +65,7 @@ class Task(Base):
 def find_task(task_id: int) -> Task:
     session = Session()
     task = session.query(Task).filter(Task.id == task_id).first()
-    return task
+    return task.__repr__()
 
 
 def update(task_id, data: _json):

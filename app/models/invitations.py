@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from database import Base, Session
+from app.database import Base, Session
 import uuid
 
 

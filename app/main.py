@@ -9,9 +9,8 @@ from datetime import date
 from models.update import UpdateTask
 from models.User import User, find_user
 from models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
-from models.Group import add_to_group, create_new_group, all_members, drop_groups_table, all_groups
+from models.Group import add_to_group, create_new_group, find_group, all_groups, delete_group
 from models.invitations import generate_unique_token, Invitation, is_invitation
-from models.members import drop_members_table
 from models.GroupTask import GroupTask
 from auth import login_jwt, AuthHandler
 
@@ -34,8 +33,7 @@ def user_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 def sign_up(username: str = Form(...), email: str = Form(...), password: str = Form(...)):
     if find_user(email) is None:
         new_user = User(username, email, password)
-        new_user.add()
-        raise HTTPException(status_code=200, detail="Successful sign up!")
+        return new_user.add()
     else:
         raise HTTPException(status_code=409, detail="User already exists")
 
@@ -90,10 +88,14 @@ async def update_task(task_id: int, update_data: UpdateTask, token: str = Depend
     email = auth_handler.decode_token(token)
     user = find_user(email)
     task = find_task(task_id)
-    if user and task and user.id == task.user_id:
+    #  only the admin should change group tasks, and others only status
+    if user and task and user.id == task["user_id"]:
         data = update_data.dict(exclude_unset=True)
+        if "category" in data and task["category"] != data["category"] and (
+                task["category"] == TaskCategory.GROUP or data["category"] == TaskCategory.GROUP):
+            raise HTTPException(status_code=403, detail="Can't change category to/from Group")
         update(task_id, data)
-        return find_task(task_id).__repr__()
+        return find_task(task_id)
     elif task:
         raise HTTPException(status_code=403, detail="You can not change this task!")
     else:
@@ -105,7 +107,7 @@ async def delete_task(task_id: int, token: str = Depends(oauth2_scheme)):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     task = find_task(task_id)
-    if user and task and user.id == task.user_id:
+    if user and task and user.id == task["user_id"]:
         delete_user_task(task_id)
         raise HTTPException(status_code=200, detail="Successfully deleted task")
     elif task:
@@ -123,8 +125,7 @@ def create_task(title: str, description: str, status: TaskStatus, due_date: Unio
     user = find_user(email)
     if user:
         new_task = Task(title, description, due_date, status, user.id, category)
-        new_task.add()
-        raise HTTPException(status_code=200, detail="Successfully added!")
+        return new_task.add()
     else:
         raise HTTPException(status_code=404, detail="User not found!")
 
@@ -135,12 +136,10 @@ def create_group(name: str, description: str, token: Annotated[str, Depends(oaut
     user = find_user(email)
     if user:
         created = create_new_group(user.id, name, description)
-        if created == -1:
-            raise HTTPException(status_code=400, detail="Incorrect format!")
-        elif created == 0:
+        if created is None:
             raise HTTPException(status_code=409, detail="Group with such name already exist!")
         else:
-            raise HTTPException(status_code=200, detail="Successfully added!")
+            return created
     else:
         raise HTTPException(status_code=404, detail="User not found!")
 
@@ -232,16 +231,32 @@ def new_group_task(group_id: int, title: str, description: str, status: TaskStat
             break
     if found:
         new_task = Task(title, description, due_date, status, user.id, TaskCategory.GROUP)
-        task_id = new_task.add()
+        task_id = new_task.add()["id"]
         group_task = GroupTask(group_id, task_id)
-        group_task.add()
+        return group_task.add()
     else:
         raise HTTPException(status_code=403,
                             detail="You are not the owner of the group! Only the owner can create tasks!")
 
 
+@app.delete("/users/me/delete_group/{group_id}")
+async def deleteGroup(group_id: int, token: str = Depends(oauth2_scheme)):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    group = find_group(group_id)
+    if user and group and user.id == group["creator_id"]:
+        delete_group(group_id)
+        raise HTTPException(status_code=200, detail="Successfully deleted group")
+    elif group and user:
+        raise HTTPException(status_code=403, detail="You can not delete this group¬¬¬!")
+    else:
+        raise HTTPException(status_code=404, detail="Not Found!")
+
+
 # check if that group still exist?
 if __name__ == "__main__":
     # init_db()
-    print(all_groups(2))
-    # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
+    uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
+
+
+

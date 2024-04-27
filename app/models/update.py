@@ -2,7 +2,7 @@ from datetime import date
 from typing import Optional, Union
 
 from pydantic import BaseModel
-from models.Task import TaskCategory, TaskStatus
+from app.models.Task import TaskCategory, TaskStatus
 
 
 class UpdateUserInfo(BaseModel):

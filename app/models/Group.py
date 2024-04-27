@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, ARRAY, Table, ForeignKey
-from database import Base, Session, engine
-from models.members import add_member, members
+from sqlalchemy import Column, String, Integer
+from app.database import Base, Session, engine
+from app.models.members import add_member, members
 
 
 class Group(Base):
@@ -46,18 +46,20 @@ def member_of_groups(user_id):
 
 
 def create_new_group(creator_id: int, name: str, description: str):
-    try:
-        new_group = Group(creator_id, name, description)
-    except ValueError:
-        return -1  # incorrect format
+    new_group = Group(creator_id, name, description)
     session = Session()
     existed = session.query(Group).filter(creator_id == Group.creator_id, name == Group.name).first()
     if existed is not None:
-        return 0  # group already exists
+        return None
     session.add(new_group)
     session.commit()
-    add_to_group(new_group.id, creator_id)
-    return 1  # successful operation
+    return new_group.__repr__()
+
+
+def find_group(group_id: int) -> Group:
+    session = Session()
+    group = session.query(Group).filter(Group.id == group_id).first()
+    return group.__repr__()
 
 
 def add_to_group(group_id: int, member_id: int):
@@ -70,3 +72,9 @@ def all_members(group_id):
 
 def drop_groups_table():
     Base.metadata.tables['groups'].drop(bind=engine, checkfirst=True)
+
+
+def delete_group(group_id):
+    session = Session()
+    session.query(Group).filter(Group.id == group_id).delete()
+    session.commit()

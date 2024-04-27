@@ -1,11 +1,11 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
-from database import Base, Session
+from app.database import Base, Session
 import bcrypt
 
-from models.Task import Task
-from models.Group import member_of_groups, all_groups
+from app.models.Task import Task
+from app.models.Group import member_of_groups, all_groups
 
 
 class User(Base):
@@ -32,6 +32,7 @@ class User(Base):
         try:
             session.add(self)
             session.commit()
+            return self.__repr__()
         except IntegrityError:
             session.rollback()
             raise ValueError("The email already in use!")
