@@ -1,18 +1,18 @@
-import uvicorn, os
+from datetime import date
+from typing import Annotated, Union
 
+import os
+import uvicorn
 from fastapi import FastAPI, Depends, Form, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from app.database import init_db
-from typing import Annotated, Union
-from datetime import date
 
-from app.models.update import UpdateTask
-from app.models.User import User, find_user
-from app.models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
-from app.models.Group import add_to_group, create_new_group, find_group, all_groups, delete_group
-from app.models.invitations import generate_unique_token, Invitation, is_invitation
-from app.models.GroupTask import GroupTask
 from app.auth import login_jwt, AuthHandler
+from app.models.Group import add_to_group, create_new_group, find_group, all_groups, delete_group
+from app.models.GroupTask import GroupTask, find_group_id
+from app.models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
+from app.models.User import User, find_user
+from app.models.invitations import generate_unique_token, Invitation, is_invitation
+from app.models.update import UpdateTask
 
 app = FastAPI()
 auth_handler = AuthHandler()
@@ -88,6 +88,7 @@ async def update_task(task_id: int, update_data: UpdateTask, token: str = Depend
     email = auth_handler.decode_token(token)
     user = find_user(email)
     task = find_task(task_id)
+    group_id = find_group_id(task_id)
     #  only the admin should change group tasks, and others only status
     if user and task and user.id == task["user_id"]:
         data = update_data.dict(exclude_unset=True)
@@ -96,6 +97,17 @@ async def update_task(task_id: int, update_data: UpdateTask, token: str = Depend
             raise HTTPException(status_code=403, detail="Can't change category to/from Group")
         update(task_id, data)
         return find_task(task_id)
+    elif task and task["category"] == TaskCategory.GROUP and group_id:
+        found = False
+        for group in user.user_member_groups():
+            if group.id == group_id:
+                found = True
+                break
+        if found:
+            update(task_id, {"status": update_data.status or task["status"]})
+            return find_task(task_id)
+        else:
+            raise HTTPException(status_code=403, detail="You can not change this task!")
     elif task:
         raise HTTPException(status_code=403, detail="You can not change this task!")
     else:
@@ -107,7 +119,7 @@ async def delete_task(task_id: int, token: str = Depends(oauth2_scheme)):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     task = find_task(task_id)
-    if user and task and user.id == task["user_id"]:
+    if user and task and "user_id" in task and user.id == task["user_id"]:
         delete_user_task(task_id)
         raise HTTPException(status_code=200, detail="Successfully deleted task")
     elif task:
@@ -222,6 +234,8 @@ def decline_invitation(invitation_token: str, token: Annotated[str, Depends(oaut
 @app.post("/users/me/group/{group_id}/new_task")
 def new_group_task(group_id: int, title: str, description: str, status: TaskStatus, due_date: Union[int, date],
                    token: Annotated[str, Depends(oauth2_scheme)]):
+    if not isinstance(due_date, int):
+        raise HTTPException(status_code=422, detail="The date format is incorrect!")
     email = auth_handler.decode_token(token)
     user = find_user(email)
     found = False
@@ -230,10 +244,10 @@ def new_group_task(group_id: int, title: str, description: str, status: TaskStat
             found = True
             break
     if found:
-        new_task = Task(title, description, due_date, status, user.id, TaskCategory.GROUP)
-        task_id = new_task.add()["id"]
-        group_task = GroupTask(group_id, task_id)
-        return group_task.add()
+        new_task = create_task(title, description, status, due_date, TaskCategory.GROUP, token)
+        if new_task:
+            group_task = GroupTask(group_id, new_task["id"])
+            return group_task.add()
     else:
         raise HTTPException(status_code=403,
                             detail="You are not the owner of the group! Only the owner can create tasks!")
@@ -255,8 +269,10 @@ async def deleteGroup(group_id: int, token: str = Depends(oauth2_scheme)):
 
 # check if that group still exist?
 if __name__ == "__main__":
+    # print("DF")
     # init_db()
-    uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
+    delete_user_task(96)
+    # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
 
 
 

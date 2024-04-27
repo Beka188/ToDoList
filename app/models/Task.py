@@ -34,7 +34,6 @@ class Task(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     category = Column("category", EnumType(TaskCategory), default=TaskCategory.OTHER)
 
-
     user = relationship("User", back_populates="tasks")
 
     def __init__(self, title, description, due_date, status, user_id, category):
@@ -46,6 +45,7 @@ class Task(Base):
         self.category = category
 
     def __repr__(self):
+        pass
         return {"id": self.id, "title": self.title, "description": self.description, "category": self.category,
                 "due_date": datetime.fromtimestamp(self.due_date), "status": self.status, "user_id": self.user_id}
 
@@ -62,10 +62,12 @@ class Task(Base):
             session.close()
 
 
-def find_task(task_id: int) -> Task:
+def find_task(task_id: int):
     session = Session()
     task = session.query(Task).filter(Task.id == task_id).first()
-    return task.__repr__()
+    if task:
+        return task.__repr__()
+    return None
 
 
 def update(task_id, data: _json):
@@ -75,9 +77,6 @@ def update(task_id, data: _json):
         print("Dannye: ")
         for key, value in data.items():
             if hasattr(task, key):
-                if key == "due_date":
-                    if isinstance(value, int):
-                        value = date.fromtimestamp(value)
                 setattr(task, key, value)
         session.commit()
     except Exception as e:
@@ -91,4 +90,3 @@ def delete_user_task(task_id):
     session = Session()
     session.query(Task).filter(Task.id == task_id).delete()
     session.commit()
-

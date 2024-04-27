@@ -36,3 +36,11 @@ class GroupTask(Base):
             raise e
         finally:
             session.close()
+
+
+def find_group_id(task_id):
+    session = Session()
+    group_task = session.query(GroupTask).filter(GroupTask.task_id == task_id).first()
+    if group_task:
+        return group_task.group_id
+    return None
