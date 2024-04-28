@@ -1,22 +1,26 @@
 from datetime import date
 from typing import Annotated, Union
 
-import os
-import uvicorn
 from fastapi import FastAPI, Depends, Form, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi_mail import FastMail, MessageSchema, MessageType
+from starlette.responses import JSONResponse
 
 from app.auth import login_jwt, AuthHandler
+from app.emailVerification import conf
 from app.models.Group import add_to_group, create_new_group, find_group, all_groups, delete_group
 from app.models.GroupTask import GroupTask, find_group_id
 from app.models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
-from app.models.User import User, find_user
+from app.models.User import User, find_user, update_user, delete_user
 from app.models.invitations import generate_unique_token, Invitation, is_invitation
 from app.models.update import UpdateTask
+from app.database import init_db
+from app.models.email import find_user_by_token, Email, is_valid_email, delete_verification_token
 
 app = FastAPI()
 auth_handler = AuthHandler()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+base = "http://127.0.0.1:8000"
 
 
 @app.get("/")
@@ -31,11 +35,41 @@ def user_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
 @app.post("/auth/signup")
 def sign_up(username: str = Form(...), email: str = Form(...), password: str = Form(...)):
+    if not is_valid_email(email):
+        raise HTTPException(status_code=422, detail="The email format is incorrect!")
     if find_user(email) is None:
         new_user = User(username, email, password)
         return new_user.add()
     else:
         raise HTTPException(status_code=409, detail="User already exists")
+
+
+@app.post("/auth/send_verify_email/")
+async def send_email_verification(token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    token = generate_unique_token()
+    em = Email(email, token)
+    em.add()
+    a = base + f"/auth/verify/{token}"
+    html = f"<p>Hi, please click the following link to verify your email:</p><a href=\"{a}\">Verify Email</a>"
+    message = MessageSchema(
+        subject="ToDoAPP-verification",
+        recipients=[email],
+        body=f"Verification: {html}",
+        subtype=MessageType.html,
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)
+    return JSONResponse(status_code=200, content={"message": "email has been sent"})
+
+
+@app.get("/auth/verify/{token}")
+async def verify_email(token: str):
+    email = find_user_by_token(token)
+    if email is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    update_user(email, {"is_email_verified": True})
+    return {"message": "Email verified successfully"}
 
 
 @app.post("/token")
@@ -269,10 +303,7 @@ async def deleteGroup(group_id: int, token: str = Depends(oauth2_scheme)):
 
 # check if that group still exist?
 if __name__ == "__main__":
-    # print("DF")
-    # init_db()
-    delete_user_task(96)
+    print()
+    # delete_user("esil.seitkalyk@gmail.com")
+    delete_verification_token("madikphone222@gmail.com")
     # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")
-
-
-

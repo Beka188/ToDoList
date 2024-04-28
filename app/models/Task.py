@@ -1,5 +1,5 @@
 import _json
-from datetime import date, datetime
+from datetime import datetime
 
 from sqlalchemy import Column, String, Integer, ForeignKey, \
     Enum as EnumType

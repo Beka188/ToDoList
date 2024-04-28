@@ -1,7 +1,9 @@
-from sqlalchemy import Column, String, Integer
+import _json
+
+from sqlalchemy import Column, String, Integer, Boolean
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
-from app.database import Base, Session
+from app.database import Base, Session, engine
 import bcrypt
 
 from app.models.Task import Task
@@ -13,6 +15,7 @@ class User(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     username = Column("username", String)
     email = Column("email", String, unique=True)
+    is_email_verified = Column("is_email_verified", Boolean, default=False)
     password = Column("password", String)
     tasks = relationship("Task", back_populates="user")
 
@@ -24,7 +27,8 @@ class User(Base):
     def __repr__(self):
         return {"username": self.username,
                 "email": self.email,
-                "id": self.id
+                "id": self.id,
+                "is_email_verified": self.is_email_verified
                 }
 
     def add(self):
@@ -70,3 +74,28 @@ def find_user(email):
     session = Session()
     user = session.query(User).filter(User.email == email).first()
     return user
+
+
+def update_user(email, data: _json):
+    session = Session()
+    task = session.query(User).filter(User.email == email).first()
+    try:
+        for key, value in data.items():
+            if hasattr(task, key):
+                setattr(task, key, value)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
+
+def delete_user(email):
+    session = Session()
+    session.query(User).filter(User.email == email).delete()
+    session.commit()
+
+
+def drop_users_table():
+    Base.metadata.tables['users'].drop(bind=engine, checkfirst=True)
