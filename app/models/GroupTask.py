@@ -44,3 +44,14 @@ def find_group_id(task_id):
     if group_task:
         return group_task.group_id
     return None
+
+
+def delete_group_task(task_id: int = None, group_id: int = None):
+    if task_id:
+        session = Session()
+        session.query(GroupTask).filter(GroupTask.task_id == task_id).delete()
+        session.commit()
+    elif group_id:
+        session = Session()
+        session.query(GroupTask).filter(GroupTask.group_id == group_id).delete()
+        session.commit()

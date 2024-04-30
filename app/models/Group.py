@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer
 from app.database import Base, Session, engine
 from app.models.members import add_member, members
-
+from app.models.GroupTask import delete_group_task
 
 class Group(Base):
     __tablename__ = "groups"
@@ -77,4 +77,5 @@ def drop_groups_table():
 def delete_group(group_id):
     session = Session()
     session.query(Group).filter(Group.id == group_id).delete()
+    delete_group_task(group_id=group_id)
     session.commit()

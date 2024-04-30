@@ -9,7 +9,7 @@ from starlette.responses import JSONResponse
 from app.auth import login_jwt, AuthHandler
 from app.emailVerification import conf
 from app.models.Group import add_to_group, create_new_group, find_group, all_groups, delete_group
-from app.models.GroupTask import GroupTask, find_group_id
+from app.models.GroupTask import GroupTask, find_group_id, delete_group_task
 from app.models.Task import Task, find_task, update, delete_user_task, TaskStatus, TaskCategory
 from app.models.User import User, find_user, update_user, delete_user
 from app.models.invitations import generate_unique_token, Invitation, is_invitation
@@ -54,7 +54,7 @@ async def send_email_verification(token: Annotated[str, Depends(oauth2_scheme)])
     html = f"<p>Hi, please click the following link to verify your email:</p><a href=\"{a}\">Verify Email</a>"
     message = MessageSchema(
         subject="ToDoAPP-verification",
-        recipients=[email],
+        recipients=[email, ],
         body=f"Verification: {html}",
         subtype=MessageType.html,
     )
@@ -87,34 +87,18 @@ def get_info_about_user(token: Annotated[str, Depends(oauth2_scheme)]):
                 }
 
 
-@app.get("/users/me/tasks")
-def user_tasks(token: Annotated[str, Depends(oauth2_scheme)], status: str = Query(None), category: str = Query(None),
-               sort_by: str = Query(None)):
+@app.post("/users/me/new_task")
+def create_task(title: str, description: str, status: TaskStatus, due_date: Union[int, date], category: TaskCategory,
+                token: Annotated[str, Depends(oauth2_scheme)]):
+    if not isinstance(due_date, int):
+        raise HTTPException(status_code=422, detail="The date format is incorrect!")
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
-        tasks = user.all_tasks()
-        if sort_by:
-            reverse = False
-            if sort_by.startswith("-"):
-                reverse = True
-                sort_by = sort_by[1:]
-            tasks.sort(key=lambda x: x.get(sort_by), reverse=reverse)
-        if status is not None:
-            if status in TaskStatus:
-                tasks = [task for task in tasks if task["status"] == status]
-            else:
-                raise HTTPException(status_code=400, detail="Provided status is not valid!")
-        if category is not None:
-            if category in TaskCategory:
-                tasks = [task for task in tasks if task["category"] == category]
-            else:
-                raise HTTPException(status_code=400, detail="Provided category is not valid!")
-        return {"tasks": tasks}
-    elif not user:
-        raise HTTPException(status_code=404, detail="User not found!")
+        new_task = Task(title, description, due_date, status, user.id, category)
+        return new_task.add()
     else:
-        raise HTTPException(status_code=500)
+        raise HTTPException(status_code=404, detail="User not found!")
 
 
 @app.patch("/users/me/update_task/{task_id}")
@@ -162,18 +146,34 @@ async def delete_task(task_id: int, token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=404, detail="Not Found!")
 
 
-@app.post("/users/me/new_task")
-def create_task(title: str, description: str, status: TaskStatus, due_date: Union[int, date], category: TaskCategory,
-                token: Annotated[str, Depends(oauth2_scheme)]):
-    if not isinstance(due_date, int):
-        raise HTTPException(status_code=422, detail="The date format is incorrect!")
+@app.get("/users/me/tasks")
+def user_tasks(token: Annotated[str, Depends(oauth2_scheme)], status: str = Query(None), category: str = Query(None),
+               sort_by: str = Query(None)):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
-        new_task = Task(title, description, due_date, status, user.id, category)
-        return new_task.add()
-    else:
+        tasks = user.all_tasks()
+        if sort_by:
+            reverse = False
+            if sort_by.startswith("-"):
+                reverse = True
+                sort_by = sort_by[1:]
+            tasks.sort(key=lambda x: x.get(sort_by), reverse=reverse)
+        if status is not None:
+            if status in TaskStatus:
+                tasks = [task for task in tasks if task["status"] == status]
+            else:
+                raise HTTPException(status_code=400, detail="Provided status is not valid!")
+        if category is not None:
+            if category in TaskCategory:
+                tasks = [task for task in tasks if task["category"] == category]
+            else:
+                raise HTTPException(status_code=400, detail="Provided category is not valid!")
+        return {"tasks": tasks}
+    elif not user:
         raise HTTPException(status_code=404, detail="User not found!")
+    else:
+        raise HTTPException(status_code=500)
 
 
 @app.post("/users/me/group/new_group")
@@ -303,7 +303,7 @@ async def deleteGroup(group_id: int, token: str = Depends(oauth2_scheme)):
 
 # check if that group still exist?
 if __name__ == "__main__":
-    print()
+    delete_group_task(group_id=2)
+    # print()
     # delete_user("esil.seitkalyk@gmail.com")
-    delete_verification_token("madikphone222@gmail.com")
     # uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORT", default=8000), log_level="info")

@@ -6,6 +6,7 @@ from sqlalchemy import Column, String, Integer, ForeignKey, \
 from sqlalchemy.orm import relationship
 from enum import Enum
 from app.database import Base, Session
+from app.models.GroupTask import delete_group_task
 
 
 class TaskStatus(str, Enum):
@@ -88,5 +89,8 @@ def update(task_id, data: _json):
 
 def delete_user_task(task_id):
     session = Session()
+    task = find_task(task_id)
+    if task["category"] == TaskCategory.GROUP:
+        delete_group_task(task_id == task_id)
     session.query(Task).filter(Task.id == task_id).delete()
     session.commit()

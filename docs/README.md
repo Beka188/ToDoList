@@ -11,7 +11,7 @@ pip3 install -r requirements.txt
 Запустить FastAPI-приложение.
 
 ```bash
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
 
 ## О проекте
