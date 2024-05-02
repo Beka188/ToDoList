@@ -3,7 +3,7 @@ import _json
 from sqlalchemy import Column, String, Integer, Boolean
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
-from app.database import Base, Session, engine
+from app.core.database import Base, Session, engine
 import bcrypt
 
 from app.models.Task import Task
@@ -70,10 +70,24 @@ def login(email, password):
     return None
 
 
+def all_users():
+    session = Session()
+    users = session.query(User).all()
+    return [user.__repr__() for user in users]
+
+
 def find_user(email):
     session = Session()
     user = session.query(User).filter(User.email == email).first()
     return user
+
+
+def find_user_id(user_id: int):
+    session = Session()
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        return user.__repr__()
+    return None
 
 
 def update_user(email, data: _json):

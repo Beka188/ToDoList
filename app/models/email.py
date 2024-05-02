@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.exc import IntegrityError
 
-from app.database import Base, Session
+from app.core.database import Base, Session
 import re
 
 

@@ -1,8 +1,8 @@
 from enum import Enum
 
 from sqlalchemy import Column, Integer
-from app.models.Task import find_task
-from app.database import Base, Session
+# from app.models.Task import find_task
+from app.core.database import Base, Session
 
 
 class TaskStatus(str, Enum):
@@ -30,7 +30,7 @@ class GroupTask(Base):
         try:
             session.add(self)
             session.commit()
-            return {"group_id": self.group_id, "task": find_task(self.task_id)}
+            # return {"group_id": self.group_id, "task": find_task(self.task_id)}
         except Exception as e:
             session.rollback()
             raise e
