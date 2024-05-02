@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "todolist"
+version = "0.1.0"
+description = ""
+authors = ["Bekarys Shaimardan"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+annotated-types = "0.6.0"
+anyio = "4.3.0"
+bcrypt = "4.1.2"
+click = "8.1.7"
+fastapi = "0.110.2"
+h11 = "0.14.0"
+idna = "3.7"
+pydantic = "2.7.0"
+pydantic-core = "2.18.1"
+pyjwt = "2.8.0"
+python-multipart = "0.0.9"
+sniffio = "1.3.1"
+sqlalchemy = "2.0.29"
+starlette = "0.37.2"
+typing-extensions = "4.11.0"
+uvicorn = "0.29.0"
+python-dotenv = ">=1.0.1,<1.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
