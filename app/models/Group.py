@@ -1,7 +1,9 @@
 from sqlalchemy import Column, String, Integer
 from app.core.database import Base, Session, engine
-from app.models.members import add_member, members, delete_members
-from app.models.GroupTask import delete_group_task
+from app.models.members import add_member, members, delete_members, Member
+from app.models.GroupTask import delete_group_task, all_tasks, GroupTask
+
+
 class Group(Base):
     __tablename__ = "groups"
     id = Column("id", Integer, primary_key=True, autoincrement=True)
@@ -20,7 +22,8 @@ class Group(Base):
             "name": self.name,
             "description": self.description,
             "creator_id": self.creator_id,
-            "members": all_members(self.id)
+            "members": all_members(self.id),
+            "tasks": all_tasks(self.id)
         }
 
 
@@ -75,7 +78,30 @@ def drop_groups_table():
 
 def delete_group(group_id):
     session = Session()
-    session.query(Group).filter(Group.id == group_id).delete()
-    delete_group_task(group_id=group_id)
-    delete_members(group_id=group_id)
-    session.commit()
+    try:
+        # Start a transaction
+        with session.begin():
+            # Delete from the Group table
+            session.query(Member).filter(Member.group_id == group_id).delete()
+
+            # Delete from the GroupTask table
+            session.query(GroupTask).filter(GroupTask.group_id == group_id).delete()
+
+            # Delete from the Group table
+            session.query(Group).filter(Group.id == group_id).delete()
+
+        # Commit the transaction
+        session.commit()
+    except Exception as e:
+        # Rollback the transaction if an exception occurs
+        session.rollback()
+        raise e
+    finally:
+        # Close the session
+        session.close()
+
+    # session = Session()
+    # session.query(Group).filter(Group.id == group_id).delete()
+    # delete_group_task(group_id=group_id)
+    # delete_members(group_id=group_id)
+    # session.commit()

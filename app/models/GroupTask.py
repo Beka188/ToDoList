@@ -1,7 +1,7 @@
 from enum import Enum
 
 from sqlalchemy import Column, Integer
-# from app.models.Task import find_task
+from app.models.Task import find_task
 from app.core.database import Base, Session
 
 
@@ -30,7 +30,7 @@ class GroupTask(Base):
         try:
             session.add(self)
             session.commit()
-            # return {"group_id": self.group_id, "task": find_task(self.task_id)}
+            return {"group_id": self.group_id, "task": find_task(self.task_id)}
         except Exception as e:
             session.rollback()
             raise e
@@ -55,3 +55,10 @@ def delete_group_task(task_id: int = None, group_id: int = None):
         session = Session()
         session.query(GroupTask).filter(GroupTask.group_id == group_id).delete()
         session.commit()
+
+
+def all_tasks(group_id: int):
+    session = Session()
+    group_tasks = session.query(GroupTask).filter(GroupTask.group_id == group_id).all()
+    tasks = [find_task(group_task.task_id) for group_task in group_tasks]
+    return tasks

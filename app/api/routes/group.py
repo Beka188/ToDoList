@@ -45,9 +45,9 @@ def user_admin_groups(token: Annotated[str, Depends(oauth2_scheme)]):
     else:
         raise HTTPException(status_code=500)
 
-
 @router.get("/member")
 def user_member_groups(token: Annotated[str, Depends(oauth2_scheme)]):
+    # return {"Hello"}
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user:
@@ -57,6 +57,21 @@ def user_member_groups(token: Annotated[str, Depends(oauth2_scheme)]):
         raise HTTPException(status_code=404, detail="User not found!")
     else:
         raise HTTPException(status_code=500)
+
+@router.get("/{group_id}")
+def group_info(group_id: int, token: Annotated[str, Depends(oauth2_scheme)]):
+    email = auth_handler.decode_token(token)
+    user = find_user(email)
+    group = find_group(group_id)
+    if user and group and user.id == group["creator_id"]:
+        return find_group(group_id)
+    elif not user:
+        raise HTTPException(status_code=404, detail="User not found!")
+    else:
+        raise HTTPException(status_code=500)
+
+
+
 
 
 @router.post("/invitation")
@@ -137,7 +152,7 @@ async def deleteGroup(group_id: int, token: str = Depends(oauth2_scheme)):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     group = find_group(group_id)
-    if user and group and user.id == group["creator_id"]:
+    if user and isinstance(group, dict) and user.id == group.get("creator_id"):
         delete_group(group_id)
         raise HTTPException(status_code=200, detail="Successfully deleted group")
     elif group and user:

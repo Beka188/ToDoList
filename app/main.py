@@ -13,6 +13,9 @@ app = FastAPI(
 
 app.include_router(api_router)
 
+from app.models.User import delete_user
 from app.models.email import delete_verification_token
+
 if __name__ == "__main__":
     delete_verification_token("esil.seitkalyk@gmail.com")
+    # dele

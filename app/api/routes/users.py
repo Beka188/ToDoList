@@ -28,7 +28,7 @@ def read_user_by_id(user_id: int):
 
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int, token: Annotated[str, Depends(oauth2_scheme)]):
+def delete_user_by_id(user_id: int, token: Annotated[str, Depends(oauth2_scheme)]):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     if user and user.id == user_id:

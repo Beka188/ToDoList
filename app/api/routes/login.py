@@ -44,7 +44,7 @@ async def send_email_verification(token: Annotated[str, Depends(oauth2_scheme)])
     token = generate_unique_token()
     em = Email(email, token)
     em.add()
-    a = base + f"/auth/verify/{token}"
+    a = base + f"/login/verify/{token}"
     html = f"<p>Hi, please click the following link to verify your email:</p><a href=\"{a}\">Verify Email</a>"
     message = MessageSchema(
         subject="ToDoAPP-verification",
