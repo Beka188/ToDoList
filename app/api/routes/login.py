@@ -11,17 +11,20 @@ from app.models.User import find_user, User, update_user
 from app.models.email import is_valid_email, Email, find_user_by_token
 from app.models.invitations import generate_unique_token
 
-
 router = APIRouter()
 auth_handler = AuthHandler()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 base = "http://127.0.0.1:8000"
 
 
+@router.get("/")
+def home():
+    return {"message": "Welcome to the my project!"}
+
+
 @router.post("/token")
 def access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return login_jwt(form_data)
-
 
 
 @router.post("/signup")
@@ -33,7 +36,6 @@ def sign_up(username: str = Form(...), email: str = Form(...), password: str = F
         return new_user.add()
     else:
         raise HTTPException(status_code=409, detail="User already exists")
-
 
 
 @router.post("/login/send_verify_email/")

@@ -24,10 +24,10 @@ def read_tasks(token: Annotated[str, Depends(oauth2_scheme)]):
     raise HTTPException(status_code=404, detail="User not found!")
 
 @router.get("/{id}")
-def read_tasks(id: int, token: Annotated[str, Depends(oauth2_scheme)]):
+def read_tasks(task_id: int, token: Annotated[str, Depends(oauth2_scheme)]):
     user = find_user(auth_handler.decode_token(token))
     if user:
-        return find_task(id)
+        return find_task(task_id)
     raise HTTPException(status_code=404, detail="User not found!")
 
 
