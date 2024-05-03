@@ -1,8 +1,7 @@
 from typing import Annotated
 
 from fastapi import HTTPException, Security, Depends, status
-from fastapi.security import HTTPBasicCredentials, HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer, \
-    OAuth2PasswordRequestForm
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from app.models.User import login
 import jwt

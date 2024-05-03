@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
-
 from app.api.main import api_router
 
 
@@ -13,3 +12,7 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
+
+from app.models.email import delete_verification_token
+if __name__ == "__main__":
+    delete_verification_token("esil.seitkalyk@gmail.com")

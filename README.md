@@ -1,17 +1,20 @@
 # To Do List
 
+## Требования
+* [Docker](https://www.docker.com/)  
+* [Poetry](https://python-poetry.org/) для управления пакетами и окружением Python.
+
 ## Запуск проекта
 
-Установить необходимые библотеки и зависимости:
+Построить Docker-образ с именем "myproject"
 
 ```bash
-pip3 install -r requirements.txt
+docker build -t myproject .
 ```
 
-Запустить FastAPI-приложение.
-
+Запуск контейнера с именем "mycontainer"
 ```bash
-uvicorn app.main:app --reload
+docker run -d --name mycontainer -p 80:80 myproject
 ```
 
 ## О проекте
