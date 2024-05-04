@@ -6,6 +6,8 @@ from sqlalchemy import Column, String, Integer, ForeignKey, \
 from sqlalchemy.orm import relationship
 from enum import Enum
 from app.core.database import Base, Session
+
+
 # from app.models.GroupTask import delete_group_task
 
 
@@ -93,6 +95,12 @@ def delete_user_task(task_id):
     # if task["category"] == TaskCategory.GROUP:
     #     delete_group_task(task_id == task_id)
     session.query(Task).filter(Task.id == task_id).delete()
+    session.commit()
+
+
+def delete_all_user_tasks(user_id):
+    session = Session()
+    session.query(Task).filter(Task.user_id == user_id).delete()
     session.commit()
 
 

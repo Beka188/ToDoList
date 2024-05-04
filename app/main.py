@@ -13,9 +13,15 @@ app = FastAPI(
 
 app.include_router(api_router)
 
-from app.models.User import delete_user
+from app.models.User import delete_user, drop_users_table
 from app.models.email import delete_verification_token
+from app.core.database import init_db
+from app.models.Task import delete_user_task
 
 if __name__ == "__main__":
+    # delete_user_task()
+    # init_db()
+    # drop_users_table()
+    delete_user("esil.seitkalyk@gmail.com")
     delete_verification_token("esil.seitkalyk@gmail.com")
     # dele

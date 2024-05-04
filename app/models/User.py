@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base, Session, engine
 import bcrypt
 
-from app.models.Task import Task
+from app.models.Task import Task, delete_all_user_tasks
 from app.models.Group import member_of_groups, all_groups
 
 
@@ -107,6 +107,8 @@ def update_user(email, data: _json):
 
 def delete_user(email):
     session = Session()
+    user = find_user(email)
+    delete_all_user_tasks(user.id)
     session.query(User).filter(User.email == email).delete()
     session.commit()
 

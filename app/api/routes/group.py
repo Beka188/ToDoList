@@ -148,7 +148,7 @@ def new_group_task(group_id: int, title: str, description: str, status: TaskStat
 
 
 @router.delete("/{group_id}")
-async def deleteGroup(group_id: int, token: str = Depends(oauth2_scheme)):
+async def delete_group_by_id(group_id: int, token: str = Depends(oauth2_scheme)):
     email = auth_handler.decode_token(token)
     user = find_user(email)
     group = find_group(group_id)

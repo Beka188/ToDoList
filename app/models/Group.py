@@ -79,29 +79,14 @@ def drop_groups_table():
 def delete_group(group_id):
     session = Session()
     try:
-        # Start a transaction
         with session.begin():
-            # Delete from the Group table
             session.query(Member).filter(Member.group_id == group_id).delete()
-
-            # Delete from the GroupTask table
             session.query(GroupTask).filter(GroupTask.group_id == group_id).delete()
-
-            # Delete from the Group table
             session.query(Group).filter(Group.id == group_id).delete()
-
-        # Commit the transaction
         session.commit()
     except Exception as e:
-        # Rollback the transaction if an exception occurs
         session.rollback()
         raise e
     finally:
-        # Close the session
         session.close()
 
-    # session = Session()
-    # session.query(Group).filter(Group.id == group_id).delete()
-    # delete_group_task(group_id=group_id)
-    # delete_members(group_id=group_id)
-    # session.commit()
